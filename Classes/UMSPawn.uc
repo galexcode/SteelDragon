@@ -92,6 +92,55 @@ simulated function PlayTakeHitEffects()
 }
 */
 
+function bool Died(Controller Killer, class<DamageType> damageType, vector HitLocation)
+{
+	//local UMSPlayerController umpc;
+	//umpc = UMSPlayerController(Killer);
+	if (Super.Died(Killer, DamageType, HitLocation))
+	{
+		//todo: let damageType handle the blodd decals
+		LeaveBloodDecalOnGround(); 
+		return true;
+	}
+	return false;
+}
+
+simulated function LeaveBloodDecalOnGround()
+{
+	//todo: use socket for decal location
+	local MaterialInstanceTimeVarying MITV_Decal;
+	
+	local vector hitNorm;
+	local vector hitLoc;
+	local vector TraceDest;
+	local vector TraceStart;
+	local vector TraceExtent;
+	local TraceHitInfo HitInfo;
+	local actor TraceActor;
+	
+	//local UMSPlayerController PC;
+	//local rotator targetRot;
+	//local vector decalLoc;
+	//UMSPlayerController(Killer).Print("LeaveBloodDecalOnGround"$HitLoc);
+	//PC =  UMSPlayerController(Controller);
+	//targetRot.pitch = 90;
+	//targetRot.Roll=0;
+	//targetRot.Yaw = 0;
+	//decalLoc = GetPawnViewLocation();
+	TraceStart = Location;
+	TraceDest =TraceStart + ( vect(0,0,-1) * 101 );
+	TraceActor = Trace( hitLoc, hitNorm, TraceDest, TraceStart, false, TraceExtent, HitInfo, TRACEFLAG_PhysicsVolumes );
+	MITV_Decal = new(Outer) class'MaterialInstanceTimeVarying';
+	MITV_Decal.SetParent( GetFamilyInfo().default.BloodSplatterDecalMaterial );
+	if(TraceActor!=none&&TraceActor.bWorldGeometry)
+	{
+		//PC.Print("Start Decal");
+		WorldInfo.MyDecalManager.SpawnDecal(MITV_Decal, hitLoc, rotator(-hitNorm), 100, 100, 50, false);
+		MITV_Decal.SetScalarStartTime( class'UTGib'.default.DecalDissolveParamName, class'UTGib'.default.DecalWaitTimeBeforeDissolve );		
+	}
+	
+}
+
 simulated function EquipSecondary(UMSWeapon otherWeapon)
 {
 	otherWeapon.bSecondary = true;

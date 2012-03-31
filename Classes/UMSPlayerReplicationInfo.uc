@@ -6,5 +6,5 @@ defaultproperties
 	DefaultHudColor=(R=64,G=255,B=255,A=255)
 	VoiceClass=class'UTGame.UTVoice_Robot'
 	CharPortrait=Texture2D'CH_IronGuard_Headshot.HUD_Portrait_Liandri'
-	CharClassInfo=class'UMSGame.UMSFamilyInfo_PLA'
+	CharClassInfo=class'SteelDragon.UMSFamilyInfo_PLA'
 }

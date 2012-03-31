@@ -32,6 +32,11 @@ function SetupPlayerCharacter()
   ServerSetCharacterClass(CharacterClass);
 }
 
+exec function whynotrecog()
+{
+	Print("I don't know");
+}
+
 exec function SwitchWeapon(byte T)
 {
   if(bMeleeMode)
@@ -40,6 +45,12 @@ exec function SwitchWeapon(byte T)
 		super.SwitchWeapon(T);	
 }
 
+//just test whether can leave blood
+exec function LeaveBlood()
+{
+	Print("LeaveBlood");
+	UMSPawn(Pawn).LeaveBloodDecalOnGround();
+}
 
 simulated exec function ToggleMelee()
 {
