@@ -1,1 +1,11 @@
 UMSGame - SteelDragon
+
+Note(2012/3/31,by aphx): Now you don't have to change the cloned fold name, you can keep it as "SteelDragon". I modified the EditPackage section in DefaultEngine.ini. 
+
+File description:
+
+1. Classes: main game scripts, should be under [UDK dictionary]\Development\Src\SteelDragon.
+
+2. DefaultInput.ini and DefaultEngine.ini: config files, copy to [UDK dictionary]\UDKGame\Config, don't forget backup old ones.
+
+3. WarfareGame: 战争机器全脚本，供学习用，严禁传播。
