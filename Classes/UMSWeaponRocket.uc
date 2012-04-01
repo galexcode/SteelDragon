@@ -35,7 +35,7 @@ defaultproperties
 		
 	WeaponFireTypes(0)=EWFT_Projectile
 	WeaponProjectiles(0)=class'UTProj_Rocket'
-	GrenadeClass = class'UTProj_Grenade'
+	GrenadeClass = class'UMSProj_Grenade'
 	MaxFireModeNum = 1
 	FireModeNames(0)="Rocket"
 	FireModeNames(1)="Grenade"
