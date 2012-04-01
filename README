@@ -9,3 +9,5 @@ File description:
 2. DefaultInput.ini and DefaultEngine.ini: config files, copy to [UDK dictionary]\UDKGame\Config, don't forget backup old ones.
 
 3. WarfareGame: 战争机器全脚本，供学习用，严禁传播。
+
+In your UDK editor, open View->World Properities, find "GameType" and change to "SteelDragonGame". Now you can test.
