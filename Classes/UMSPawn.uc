@@ -11,6 +11,26 @@ var				UMSWeaponAttachment			SecondaryWeaponAttachment;
 var UMSWeapon SecondaryWeapon;
 var repnotify class<UMSWeapon> SecondaryWeaponClass;
 var class<UTEmit_BloodSpray> BloodEmitterClass;
+var bool bHasHat;
+var class<UTGib> HatGibClass;
+var float HatGibImpulseRate;
+var int HatDropDamage;
+//var vector StoredHitLoc;
+var vector StoredHitDir;
+var float StoredHitImpulse;
+var vector StoredHitNormal;
+enum EHeadshotAction
+{
+	EHA_HeadDrop,
+	EHA_HeadRocket,
+	EHA_Spin,
+	EHA_HeadBlow,
+	EHA_None,
+};
+
+var EHeadshotAction CurrentHeadshotAction;
+
+//var bool bDropHelmet;
 
 replication
 {	
@@ -21,76 +41,204 @@ replication
 DefaultProperties
 {
 	EyeSocket=Eye
-	//BloodSplatterDecalMaterial=MaterialInstanceTimeVarying'CH_Gibs.Decals.BloodSplatter'
 	BloodEmitterClass=class'UMSEmit_BloodSpray' //this is the blood emmitter class we created earlier
-	//BloodEffects[0]=(Template=ParticleSystem'MyPackage.Effects.P_FX_Bloodhit_Corrupt_Far',MinDistance=750.0)
-	//BloodEffects[1]=(Template=ParticleSystem'MyPackage.Effects.P_FX_Bloodhit_Corrupt_Mid',MinDistance=350.0)
-	//BloodEffects[2]=(Template=ParticleSystem'MyPackage.Effects.P_FX_Bloodhit_Corrupt_Near',MinDistance=0.0)
+	bHasHat = true;
+	HatGibClass = class'UMSGib_Helmet';
+	HatGibImpulseRate = 300;
+	HatDropDamage = 20;
+	CurrentHeadshotAction = EHA_HeadDrop
 }
 
-/*
-simulated function PlayTakeHitEffects()
+//APHX: need head drop instead of head flying
+/** spawn a special gib for this pawn's head and sets it as the ViewTarget for any players that were viewing this pawn */
+simulated function SpawnHeadGib(class<UTDamageType> UTDamageType, vector HitLocation)
 {
-	local class<UMSDmgType_Rife95> UMSDamage;
-	local vector BloodMomentum;
-	local UTEmit_HitEffect HitEffect;
-	local ParticleSystem BloodTemplate;
+	local UTGib Gib;
+	local UTPlayerController PC;
+	local class<UDKEmitCameraEffect> CameraEffect;
+	local vector ViewLocation;
+	local rotator ViewRotation;
+	local PlayerReplicationInfo OldRealViewTarget;
+	local class<UTFamilyInfo> FamilyInfo;
 
-	if (EffectIsRelevant(Location, false))
+	if ( class'UTGame'.Static.UseLowGore(WorldInfo) )
 	{
-		UMSDamage = class<UMSDmgType_Rife95>(LastTakeHitInfo.DamageType);
-		if ( UMSDamage != None )
-		{
-			if (UMSDamage.default.bCausesBloodSplatterDecals && !IsZero(LastTakeHitInfo.Momentum) && !class'UTGame'.Static.UseLowGore(WorldInfo))
-			{
-				LeaveABloodSplatterDecal(LastTakeHitInfo.HitLocation, LastTakeHitInfo.Momentum);
-			}		
-		  if ( UMSDamage.default.bCausesBlood && !class'UTGame'.Static.UseLowGore(WorldInfo) )
-			{
-					BloodTemplate = class'UTEmitter'.static.GetTemplateForDistance(default.BloodEffects, LastTakeHitInfo.HitLocation, WorldInfo);This is referencing the blood effects in the default properties
-					if (BloodTemplate != None)
-					{
-						BloodMomentum = Normal(-1.0 * LastTakeHitInfo.Momentum) + (0.5 * VRand());
-						HitEffect = Spawn(default.BloodEmitterClass, self,, LastTakeHitInfo.HitLocation, rotator(BloodMomentum));
-						HitEffect.SetTemplate(BloodTemplate, true);
-						HitEffect.AttachTo(self, LastTakeHitInfo.HitBone);
-					}
-				}
+		bHeadGibbed = true;
+		return;
+	}
 
-				if ( !Mesh.bNotUpdatingKinematicDueToDistance )
+	if (!bHeadGibbed)
+	{
+		FamilyInfo = CurrCharClassInfo;
+		//spawn head gib
+		switch(CurrentHeadshotAction)
+		{
+			case EHA_HeadDrop: 
+				HeadGibDrop(HitLocation,StoredHitDir,200,false,Gib);		
+				if(Gib!=none)
 				{
-					// physics based takehit animations
-					if (UMSDamage != None)
+					SetHeadScale(0.f);
+					WorldInfo.MyEmitterPool.SpawnEmitter(FamilyInfo.default.HeadShotEffect, HitLocation, rotator(-StoredHitNormal), Gib);		
+				}
+				break;
+			case EHA_HeadRocket:
+				if ( HitLocation == Location )
+				{
+					HitLocation = Location + vector(Rotation);
+				}						
+				Gib = SpawnGib(CurrCharClassInfo.default.HeadGib.GibClass, FamilyInfo.default.HeadGib.BoneName, UTDamageType, HitLocation, true);
+				if (Gib != None)
+				{			
+					Gib.SetRotation(Rotation);
+					Gib.SetTexturesToBeResident( Gib.LifeSpan );	
+					SetHeadScale(0.f);
+					WorldInfo.MyEmitterPool.SpawnEmitter(FamilyInfo.default.HeadShotEffect, Gib.Location, rotator(vect(0,0,1)), Gib);						
+				}
+				break;
+			case EHA_None:
+				bHeadGibbed = true;
+				return;
+		}
+		if(Gib!=none)
+		{			
+					
+			foreach LocalPlayerControllers(class'UTPlayerController', PC)
+			{
+				if (PC.ViewTarget == self)
+				{
+					// save RealViewTarget for spectating so that this transition doesn't affect it
+					OldRealViewTarget = PC.RealViewTarget;
+					if (UTDamageType.default.bHeadGibCamera && (PC.UsingFirstPersonCamera() || !PC.IsInState('BaseSpectating')))
 					{
-						//@todo: apply impulse when in full ragdoll too (that also needs to happen on the server)
-						if ( !class'Engine'.static.IsSplitScreen() && Health > 0 && DrivenVehicle == None && Physics != PHYS_RigidBody &&
-							VSize(LastTakeHitInfo.Momentum) > SYTDamage.default.PhysicsTakeHitMomentumThreshold )
+						PC.SetViewTarget(Gib);
+
+						CameraEffect = UTDamageType.static.GetDeathCameraEffectVictim(self);
+						if (CameraEffect != None)
 						{
-							if (Mesh.PhysicsAssetInstance != None)
-							{
-								// just add an impulse to the asset that's already there
-								Mesh.AddImpulse(LastTakeHitInfo.Momentum, LastTakeHitInfo.HitLocation);
-								// if we were already playing a take hit effect, restart it
-								if (bBlendOutTakeHitPhysics)
-								{
-									Mesh.PhysicsWeight = 0.5;
-								}
-							}
-							else if (Mesh.PhysicsAsset != None)
-							{
-								Mesh.PhysicsWeight = 0.5;
-								Mesh.PhysicsAssetInstance.SetNamedBodiesFixed(true, TakeHitPhysicsFixedBones, Mesh, true);
-								Mesh.AddImpulse(LastTakeHitInfo.Momentum, LastTakeHitInfo.HitLocation);
-								bBlendOutTakeHitPhysics = true;
-							}
+							PC.ClientSpawnCameraEffect(CameraEffect);
 						}
-						UMSDamage.static.SpawnHitEffect(self, LastTakeHitInfo.Damage, LastTakeHitInfo.Momentum, LastTakeHitInfo.HitBone, LastTakeHitInfo.HitLocation);
+					}
+					else
+					{
+						PC.GetPlayerViewPoint(ViewLocation, ViewRotation);
+						PC.SetViewTarget(PC);
+						PC.SetLocation(ViewLocation);
+						PC.SetRotation(ViewRotation);
+					}
+					PC.RealViewTarget = OldRealViewTarget;
 				}
 			}
+			bHeadGibbed = true;
 		}
 	}
 }
-*/
+
+function HeadGibDrop(vector sLoc,vector sDir, float speed, bool bSpinGib, optional out UTGib oGib)
+{
+	local UTGib Gib;
+	local Rotator sRot;
+	sRot = Rotator(sDir);
+	Gib = Spawn(CurrCharClassInfo.default.HeadGib.GibClass, self,, sLoc, sRot);
+	if ( Gib != None )
+	{
+		// add initial impulse
+		//GetAxes(sRot, X, Y, Z);
+
+		if (Gib.bUseUnrealPhysics)
+		{
+			Gib.Velocity = sDir*speed;
+			Gib.SetPhysics(PHYS_Falling);
+			Gib.RotationRate.Yaw = Rand(100000);
+			Gib.RotationRate.Pitch = Rand(100000);
+			Gib.RotationRate.Roll = Rand(100000);
+		}
+		else
+		{
+			Gib.Velocity = sDir*HatGibImpulseRate;
+			Gib.GibMeshComp.WakeRigidBody();
+			Gib.GibMeshComp.SetRBLinearVelocity(Gib.Velocity, false);
+			if ( bSpinGib )
+			{
+				Gib.GibMeshComp.SetRBAngularVelocity(VRand() * 50, false);
+			}
+		}
+		Gib.LifeSpan = Gib.LifeSpan + (2.0 * FRand());
+		oGib = Gib;
+	}
+}
+
+function bool IsHitHead(const out ImpactInfo Impact)
+{
+	local vector HeadLocation;
+	local float Distance;
+
+	if (HeadBone == '')
+	{
+		return False;
+	}
+
+	Mesh.ForceSkelUpdate();
+	HeadLocation = Mesh.GetBoneLocation(HeadBone) + vect(0,0,1) * HeadHeight;
+
+	// Find distance from head location to bullet vector
+	Distance = PointDistToLine(HeadLocation, Impact.RayDir, Impact.HitLocation);
+
+	return ( Distance < (HeadRadius * HeadScale) );
+}
+
+function SpawnHatGib(vector sLoc, vector sDir, bool bSpinGib )
+{
+	local UTGib Gib;
+	local Rotator sRot;
+	sRot = Rotator(sDir);
+	Gib = Spawn(HatGibClass, self,, sLoc, sRot);
+
+	if ( Gib != None )
+	{
+		// add initial impulse
+		//GetAxes(sRot, X, Y, Z);
+
+		if (Gib.bUseUnrealPhysics)
+		{
+			Gib.Velocity = sDir*HatGibImpulseRate;
+			Gib.SetPhysics(PHYS_Falling);
+			Gib.RotationRate.Yaw = Rand(100000);
+			Gib.RotationRate.Pitch = Rand(100000);
+			Gib.RotationRate.Roll = Rand(100000);
+		}
+		else
+		{
+			Gib.Velocity = sDir*HatGibImpulseRate;
+			Gib.GibMeshComp.WakeRigidBody();
+			Gib.GibMeshComp.SetRBLinearVelocity(Gib.Velocity, false);
+			if ( bSpinGib )
+			{
+				Gib.GibMeshComp.SetRBAngularVelocity(VRand() * 50, false);
+			}
+		}
+		Gib.LifeSpan = Gib.LifeSpan + (2.0 * FRand());
+	}
+}
+
+function bool TakeHeadShot(const out ImpactInfo Impact, class<UTDamageType> HeadShotDamageType, int HeadDamage, controller InstigatingController)
+{
+	if(IsHitHead(Impact))
+	{
+		if (bHasHat&&HeadDamage>HatDropDamage&&HeadDamage<Health)
+		{
+			bHasHat = false;
+			SpawnHatGib(Impact.HitLocation,Impact.RayDir,true);		
+			UMSPlayerController(InstigatingController).Print("Hat Dropped");
+		}
+		StoredHitDir = Impact.RayDir;
+		StoredHitNormal = Impact.HitNormal;
+		//StoredHitImpulse = 400;
+		TakeDamage(HeadDamage, InstigatingController, Impact.HitLocation, Impact.RayDir, HeadShotDamageType, Impact.HitInfo);		
+		//UMSPlayerController(InstigatingController).Print("HeadShot");
+		return true;
+	}
+	return false;
+}
 
 function bool Died(Controller Killer, class<DamageType> damageType, vector HitLocation)
 {
@@ -100,6 +248,10 @@ function bool Died(Controller Killer, class<DamageType> damageType, vector HitLo
 	{
 		//todo: let damageType handle the blodd decals
 		LeaveBloodDecalOnGround(); 
+		if(DamageType==class'UMSDmgType_Headshot')
+		{
+			UMSPlayerController(Killer).Print("HeadShot");
+		}
 		return true;
 	}
 	return false;
@@ -118,15 +270,6 @@ simulated function LeaveBloodDecalOnGround()
 	local TraceHitInfo HitInfo;
 	local actor TraceActor;
 	
-	//local UMSPlayerController PC;
-	//local rotator targetRot;
-	//local vector decalLoc;
-	//UMSPlayerController(Killer).Print("LeaveBloodDecalOnGround"$HitLoc);
-	//PC =  UMSPlayerController(Controller);
-	//targetRot.pitch = 90;
-	//targetRot.Roll=0;
-	//targetRot.Yaw = 0;
-	//decalLoc = GetPawnViewLocation();
 	TraceStart = Location;
 	TraceDest =TraceStart + ( vect(0,0,-1) * 101 );
 	TraceActor = Trace( hitLoc, hitNorm, TraceDest, TraceStart, false, TraceExtent, HitInfo, TRACEFLAG_PhysicsVolumes );

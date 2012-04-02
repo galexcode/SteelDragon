@@ -33,6 +33,9 @@ var() bool bUseCameraSocket;
 
 var() name CameraSocketName;
 
+var class<UTDamageType> HeadShotDamageType;
+var float HeadShotDamageMult;
+
 //IronSight
 var(IronSights) bool bUseISSocket;
 var(IronSights) vector	IronSightViewOffset;
@@ -112,6 +115,22 @@ var float IronsightCrosshairScalingFactor;
 var float SpreadCrosshairScalingFactor;
 var float MaxSpreadCrosshairScaling;
 var float MaxCrosshairScaling;
+
+simulated function ProcessInstantHit(byte FiringMode, ImpactInfo Impact, optional int NumHits)
+{
+	local int HeadDamage;
+	if( (Role == Role_Authority) && !bUsingAimingHelp )
+	{
+		HeadDamage = InstantHitDamage[FiringMode]* HeadShotDamageMult;
+		if ( (UMSPawn(Impact.HitActor) != None && UMSPawn(Impact.HitActor).TakeHeadShot(Impact, HeadShotDamageType, HeadDamage, Instigator.Controller)) ||
+			(UTVehicle(Impact.HitActor) != None) )
+		{
+			SetFlashLocation(Impact.HitLocation);
+			return;
+		}
+	}
+	super.ProcessInstantHit( FiringMode, Impact, NumHits);
+}
 
 simulated function TimeWeaponEquipping()
 {
@@ -986,6 +1005,9 @@ defaultproperties
     bHasIronSights=True
 		
 	MuzzleFlashSocket = "MuzzleFlashSocket"
+	
+	HeadShotDamageType=class'UMSDmgType_Headshot'
+	HeadShotDamageMult=2.0
 	
 	MaxFireModeNum = 2;
 	FireModeNames(0)="Burst"

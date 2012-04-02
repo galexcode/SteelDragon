@@ -52,4 +52,5 @@ defaultproperties
 	GibTrail=ParticleSystem'MyPackage.Effects.P_Vehicle_Damage_1_Cicada'
 	bCausesBloodSplatterDecals=FALSE 
   bCausesBlood=FALSE
+	bLocationHit = true
 }

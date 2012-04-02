@@ -4,6 +4,8 @@
 
 class UMSFamilyInfo_PLA extends UTFamilyInfo
 	abstract;
+	
+var GibInfo HelmetGib;
 
 defaultproperties
 {
@@ -35,13 +37,13 @@ defaultproperties
 	SoundGroupClass=class'UTPawnSoundGroup_Liandri'
 	VoiceClass=class'UTVoice_Robot'
 
-	HeadShotEffect=ParticleSystem'MyPackage.Effects.P_BloodSplat_01'
-
 	BloodSplatterDecalMaterial=MaterialInstanceTimeVarying'CH_Gibs.Decals.BloodSplatter'
 
 	GibExplosionTemplate=ParticleSystem'MyPackage.Effects.P_BloodSplat_01'
 
 	HeadGib=(BoneName=b_Head,GibClass=class'UTGib_RobotHead',bHighDetailOnly=false)
+	HeadShotEffect=ParticleSystem'MyPackage.Effects.P_BloodSplat_01'
+	HelmetGib =(BoneName=b_Head,GibClass=class'UMSGib_Helmet',bHighDetailOnly=false)
 
 	Gibs[0]=(BoneName=b_LeftForeArm,GibClass=class'UTGib_RobotArm',bHighDetailOnly=false)
 	Gibs[1]=(BoneName=b_RightForeArm,GibClass=class'UTGib_RobotHand',bHighDetailOnly=true)
