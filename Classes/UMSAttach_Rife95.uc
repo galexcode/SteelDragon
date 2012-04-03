@@ -21,6 +21,11 @@ DefaultProperties
 		Rotation=(pitch=0,Yaw=0)
 		Scale=1.1
 	End Object
+	
+	MuzzleFlashSocket = MuzzleFlashSocket
+  MuzzleFlashPSCTemplate=ParticleSystem'WP_Ak74.Effects.MuzzleFlash'   //开火的火焰
+  MuzzleFlashDuration=0.100000
+	
 //以下是弹着点的效果 
 DefaultImpactEffect=(DecalMaterials=(MaterialInstanceConstant'WP_Pistol.Bullet.MIl_Bullet_Concrete'),DurationOfDecal=4.000000,DecalDissolveParamName="DissolveAmount",DecalWidth=24.000000,DecalHeight=24.000000,ParticleTemplate=ParticleSystem'WP_Pistol.Effects.P_WP_Pistol_MuzzleFlash_Impact',Sound=SoundCue'WP_Pistol.Sounds_Bullet.WP_BulletImpact_Concrete')
 	

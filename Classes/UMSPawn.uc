@@ -49,6 +49,19 @@ DefaultProperties
 	CurrentHeadshotAction = EHA_HeadDrop
 }
 
+simulated function WeaponFired(Weapon InWeapon, bool bViaReplication, optional vector HitLocation)
+{
+    if (CurrentWeaponAttachment != None)
+    {
+        CurrentWeaponAttachment.ThirdPersonFireEffects(HitLocation);
+
+        if ( HitLocation != Vect(0,0,0) && (WorldInfo.NetMode == NM_ListenServer || WorldInfo.NetMode == NM_Standalone || bViaReplication) )
+        {
+            CurrentWeaponAttachment.PlayImpactEffects(HitLocation);
+        }
+    }
+}
+
 //APHX: need head drop instead of head flying
 /** spawn a special gib for this pawn's head and sets it as the ViewTarget for any players that were viewing this pawn */
 simulated function SpawnHeadGib(class<UTDamageType> UTDamageType, vector HitLocation)
@@ -74,7 +87,7 @@ simulated function SpawnHeadGib(class<UTDamageType> UTDamageType, vector HitLoca
 		switch(CurrentHeadshotAction)
 		{
 			case EHA_HeadDrop: 
-				HeadGibDrop(HitLocation,StoredHitDir,200,false,Gib);		
+				HeadGibDrop(HitLocation,StoredHitDir,400,true,Gib);		
 				if(Gib!=none)
 				{
 					SetHeadScale(0.f);
@@ -246,7 +259,7 @@ function bool Died(Controller Killer, class<DamageType> damageType, vector HitLo
 	//umpc = UMSPlayerController(Killer);
 	if (Super.Died(Killer, DamageType, HitLocation))
 	{
-		//todo: let damageType handle the blodd decals
+		//todo: let damageType handle the blood decals
 		LeaveBloodDecalOnGround(); 
 		if(DamageType==class'UMSDmgType_Headshot')
 		{

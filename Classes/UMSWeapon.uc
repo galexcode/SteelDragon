@@ -116,6 +116,7 @@ var float SpreadCrosshairScalingFactor;
 var float MaxSpreadCrosshairScaling;
 var float MaxCrosshairScaling;
 
+
 simulated function ProcessInstantHit(byte FiringMode, ImpactInfo Impact, optional int NumHits)
 {
 	local int HeadDamage;
@@ -283,12 +284,14 @@ simulated function AttachMuzzleFlash()
  *************************************************************************/
 simulated function PlayFireEffects( byte FireModeNum, optional vector HitLocation )
 {
+	/*
 	if ( FireModeNum < WeaponFireAnim.Length && WeaponFireAnim[FireModeNum] != '' )
 		PlayWeaponAnimation( WeaponFireAnim[FireModeNum], GetFireInterval(FireModeNum) );
 	if ( FireModeNum < ArmFireAnim.Length && ArmFireAnim[FireModeNum] != '' && ArmsAnimSet != none)
-		PlayArmAnimation( ArmFireAnim[FireModeNum], GetFireInterval(FireModeNum) );
+		PlayArmAnimatiown( ArmFireAnim[FireModeNum], GetFireInterval(FireModeNum) );
 
 	CauseMuzzleFlash();
+	*/
 
 	ShakeView();
 

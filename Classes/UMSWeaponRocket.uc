@@ -49,8 +49,8 @@ defaultproperties
 	
 	ShotCost(0)=1 
 	ClipCount=1 
-	AmmoCount=9 // 携弹量
-  MaxAmmoCount=36  //最大携弹量
+	AmmoCount=3 // 携弹量
+  MaxAmmoCount=9  //最大携弹量
 	
 	RecoilAmount(0)=160
 	StayRecoilFactor(0)=0.75

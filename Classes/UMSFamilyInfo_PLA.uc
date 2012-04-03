@@ -41,7 +41,7 @@ defaultproperties
 
 	GibExplosionTemplate=ParticleSystem'MyPackage.Effects.P_BloodSplat_01'
 
-	HeadGib=(BoneName=b_Head,GibClass=class'UTGib_RobotHead',bHighDetailOnly=false)
+	HeadGib=(BoneName=b_Head,GibClass=class'UMSGib_Head',bHighDetailOnly=false)
 	HeadShotEffect=ParticleSystem'MyPackage.Effects.P_BloodSplat_01'
 	HelmetGib =(BoneName=b_Head,GibClass=class'UMSGib_Helmet',bHighDetailOnly=false)
 

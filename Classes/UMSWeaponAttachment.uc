@@ -15,6 +15,7 @@ simulated function PlayImpactEffects(vector HitLocation)
 }
 */
 
+
 simulated function SecondaryAttachTo(UTPawn OwnerPawn)
 {
 	SetWeaponOverlayFlags(OwnerPawn);
@@ -84,6 +85,21 @@ simulated function ThirdPersonFireEffects(vector HitLocation)
 		}
 
 		//bFlashSecondary = !bFlashSecondary;
+	}
+}
+
+simulated function vector GetEffectLocation()
+{
+	local vector SocketLocation;
+
+	if (MuzzleFlashSocket != 'None')
+	{
+		Mesh.GetSocketWorldLocationAndRotation(MuzzleFlashSocket, SocketLocation);
+		return SocketLocation;
+	}
+	else
+	{
+		return Mesh.Bounds.Origin + (vect(45,0,0) >> Instigator.Rotation);
 	}
 }
 
